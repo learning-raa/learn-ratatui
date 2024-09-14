@@ -1,38 +1,40 @@
-use std::io;
+use anyhow::Result;
+use ratatui::crossterm::event as xEvent;
 
-use ratatui::{
-    crossterm::event::{self, KeyCode, KeyEventKind},
-    style::Stylize,
-    widgets::Paragraph,
-    DefaultTerminal,
-};
+mod app;
+use app::*;
 
-fn main() -> io::Result<()> {
+fn main() -> Result<()> {
     println!("start..");
 
     let mut terminal = ratatui::init();
     terminal.clear()?;
 
-    let app_result = run(terminal);
+    let mut app = App::new();
+    while !app.should_quit() {
+        // draw
+        terminal.draw(|frame| frame.render_widget(&app, frame.area()))?;
 
-    ratatui::restore();
-    app_result
-}
-
-//  //  //  //  //  //  //  //
-fn run(mut terminal: DefaultTerminal) -> io::Result<()> {
-    loop {
-        terminal.draw(|frame| {
-            let greeting = Paragraph::new("hi there")
-                .white()
-                .on_blue();
-            frame.render_widget(greeting, frame.area());
-        })?;
-
-        if let event::Event::Key(key) = event::read()? {
-            if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
-                return Ok(());
+        // input
+        loop {
+            let events = collect_events()?;
+            if !events.is_empty() {
+                app.handle_input(events);
+                break;
             }
         }
     }
+
+    ratatui::restore();
+    Ok(())
+}
+
+//  //  //  //  //  //  //  //
+static POLL_WAIT_TIME: std::time::Duration = std::time::Duration::from_millis(1); //from_secs(0);
+fn collect_events() -> Result<Vec<xEvent::Event>> {
+    let mut result = Vec::new();
+    while xEvent::poll(POLL_WAIT_TIME)? {
+        result.push(xEvent::read()?);
+    }
+    Ok(result)
 }
