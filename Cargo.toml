@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.88"
+edtui = "0.7.2"
 ratatui = "0.28.1"
-tui-input = "0.10.1"
-# edtui = "0.7.2"
+tklog = "0.2.0"
+# tui-input = "0.10.1"
